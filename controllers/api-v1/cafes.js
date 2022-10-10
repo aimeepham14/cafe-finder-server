@@ -2,7 +2,6 @@ const router = require('express').Router()
 const db = require('../../models')
 const axios = require('axios')
 require('dotenv').config()
-
 // GET /cafes/:searchId
 router.get('/:searchId', async(req, res) => {
     try {
@@ -22,7 +21,6 @@ router.get('/:searchId', async(req, res) => {
         res.status(500).json({ message: 'internal server error' })
     }
 })
-
 // GET /cafes/:id -- return a single cafe based on Yelp's id
 router.get('/:yelpId', async (req, res) => {
     try {
@@ -37,7 +35,6 @@ router.get('/:yelpId', async (req, res) => {
         res.status(500).json({ message: 'internal server error' })
     }
 })
-
 // POST /cafes/:id -- saves a cafe into the db
 router.post('/:yelpId', async (req, res) => {
     try {
@@ -46,7 +43,6 @@ router.post('/:yelpId', async (req, res) => {
                 'Authorization': `Bearer ${process.env.API_KEY}`
             }
         })
-
         const newCafe = await db.Cafe.create({
             yelpId: response.data.id,
             name: response.data.name,
@@ -63,7 +59,6 @@ router.post('/:yelpId', async (req, res) => {
         res.status(500).json({ message: 'internal server error' })
     }
 })
-
 // PUT /cafes/:id -- update a single cafe -- should not be used unless editing
 router.put('/:yelpId', async (req, res) => {
     try {
@@ -83,10 +78,8 @@ router.put('/:yelpId', async (req, res) => {
     } catch(err) {
         console.log(err)
         res.status(500).json({ message: 'internal server error' })
-    }    
+    }
  })
-
- 
 // DELETE /cafe/:id -- delete a cafe from the database
 router.delete('/:yelpId', async (req, res) => {
     try {
@@ -98,6 +91,5 @@ router.delete('/:yelpId', async (req, res) => {
         console.log(err)
         res.status(500).json({ message: 'internal server error' })
     }
-    
 })
 module.exports = router
