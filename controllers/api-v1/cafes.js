@@ -3,7 +3,7 @@ const db = require('../../models')
 const axios = require('axios')
 require('dotenv').config()
 // GET /cafes/:searchId
-router.get('/:searchId', async(req, res) => {
+router.get('/results/:searchId', async(req, res) => {
     try {
         const response = await axios.get('https://api.yelp.com/v3/businesses/search', {
             params: {
@@ -29,6 +29,22 @@ router.get('/:yelpId', async (req, res) => {
                 'Authorization': `Bearer ${process.env.API_KEY}`
             }
         })
+
+        const address = response.data.location.display_address.map(part => {
+            return (
+                " " + part
+            )
+        })
+
+        const newCafe = await db.Cafe.create({
+            yelpId: response.data.id,
+            name: response.data.name,
+            location: `${address}`,
+            website_link: response.data.url,
+            phone_number: response.data.display_phone,
+            price: response.data.price
+        })
+
         res.json(response.data)
     } catch(err) {
         console.log(err)
@@ -43,27 +59,8 @@ router.post('/:yelpId', async (req, res) => {
                 'Authorization': `Bearer ${process.env.API_KEY}`
             }
         })
-        const newCafe = await db.Cafe.create({
-            yelpId: response.data.id,
-            name: response.data.name,
-            // location: `${response.data.location.display_address[0]} ${response.data.location.display_address[1]} ${response.data.location.display_address[2]}`,
-            location: `${response.data.location.display_address[0]}`,
-            website_link: response.data.url,
-            phone_number: response.data.display_phone,
-            price: response.data.price
-        })
-        console.log(newCafe)
-        res.status(201).json(newCafe)
-    } catch(err) {
-        console.log(err)
-        res.status(500).json({ message: 'internal server error' })
-    }
-})
-// PUT /cafes/:id -- update a single cafe -- should not be used unless editing
-router.put('/:yelpId', async (req, res) => {
     try {
         // getting the id from the url route parameters
-        // getting the data to update from the request body
         // ensuring that the query returns the new values with the options object
         const options = { new: true }
         const updatedCafe = await db.Cafe.findByIdAndUpdate({yelpId: req.params.yelpId}, {
