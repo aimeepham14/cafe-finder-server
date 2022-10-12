@@ -24,6 +24,7 @@ router.get('/results/:searchId', async (req, res) => {
         res.status(500).json({ message: 'internal server error' })
     }
 })
+
 // GET /cafes/:id -- return a single cafe based on Yelp's id
 router.get('/:yelpId', async (req, res) => {
     try {
@@ -59,6 +60,7 @@ router.get('/:yelpId', async (req, res) => {
         res.status(500).json({ message: 'internal server error' })
     }
 })
+
 // POST /cafes/:id -- saves a cafe into the db
 router.post('/:yelpId', async (req, res) => {
     try {
@@ -161,7 +163,7 @@ router.put('/:yelpId/:userId', async (req, res) => {
             const token = await jwt.sign(payload, process.env.JWT_SECRET)
         
             res.json({foundCafe,  token })
-            
+
         } else {
             foundCafe.user.push(foundUser)
             foundUser.cafe.push(foundCafe)
