@@ -185,13 +185,8 @@ router.put('/:yelpId/:userId', async (req, res) => {
 
             // sign jwt and send back
             const token = await jwt.sign(payload, process.env.JWT_SECRET)
-<<<<<<< HEAD
-        
-            res.json({foundCafe,  token })
-=======
 
             res.json({ foundCafe, token })
->>>>>>> 15bb752d806c04c99798d73390dff74dbd1d59b8
 
         } else {
             foundCafe.user.push(foundUser)
