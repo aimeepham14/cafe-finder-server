@@ -52,7 +52,7 @@ router.get('/:yelpId', async (req, res) => {
                     price: response.data.price
                 }
             }, { upsert: true })
-        const foundCafe = await db.Cafe.findOne({ yelpId: req.params.yelpId }).populate({path: 'comment', populate: 'user'})
+        const foundCafe = await db.Cafe.findOne({ yelpId: req.params.yelpId }).populate({ path: 'comment', populate: 'user' })
         console.log(foundCafe.comment)
         res.json(foundCafe)
     } catch (err) {
@@ -82,13 +82,11 @@ router.post('/:yelpId', async (req, res) => {
 // POST /:yelpId/comments -- create a new comment
 router.post('/:yelpId/:userId/comments', async (req, res) => {
     try {
-        const foundCafe = await db.Cafe.findOne({yelpId: req.params.yelpId})
+        const foundCafe = await db.Cafe.findOne({ yelpId: req.params.yelpId })
         const foundUser = await db.User.findOne({ _id: req.params.userId })
-        
+
         foundCafe.comment.push({ content: req.body.content, drink_name: req.body.drink_name, drink_score: req.body.drink_score, user: foundUser })
-        foundCafe.save(err => {
-            if (!err) console.log('New comment created!', req.body.content)
-        })
+        await foundCafe.save()
         const payload = {
             name: foundUser.name,
             email: foundUser.email,
@@ -100,39 +98,59 @@ router.post('/:yelpId/:userId/comments', async (req, res) => {
         const token = await jwt.sign(payload, process.env.JWT_SECRET)
 
         res.json({ foundCafe, token })
-    } catch(err) {
+    } catch (err) {
         console.log(err)
         res.status(500).json({ message: 'internal server error' })
     }
 })
 
-// PUT /:yelpId/comments/:id -- edit a comment, (if comment look weird in user profile check here).
-router.put('/:yelpId/comments/:id', async (req, res) => {
+// PUT /:yelpId/:id/:comments -- edit a comment, (if comment look weird in user profile check here).
+router.put('/:yelpId/:id/comments', async (req, res) => {
     try {
-        const foundCafe = await db.Cafe.findOne({yelpId: req.params.yelpId})
-        foundCafe.comment.splice(req.params.id, 1, { content: 'hello again favorite coffee shop!', drink_name: 'Black coffee', drink_score: '5'})
-        foundCafe.save(err => {
-            if (!err) console.log('Editing comment!')
-        })
-        res.json(foundCafe)
-    } catch(err) {
+        const foundCafe = await db.Cafe.findOne({ yelpId: req.params.yelpId })
+        const foundUser = await db.User.findOne({ _id: req.params.id })
+
+        foundCafe.comment.splice(req.params.id, 1, { content: req.body.content, drink_name: req.body.drink_name, drink_score: req.body.drink_score })
+
+        await foundCafe.save()
+        const payload = {
+            name: foundUser.name,
+            email: foundUser.email,
+            id: foundUser.id,
+            cafe: foundUser.cafe
+        }
+
+        // sign jwt and send back
+        const token = await jwt.sign(payload, process.env.JWT_SECRET)
+
+        res.json({ foundCafe, token })
+    } catch (err) {
         console.log(err)
         res.status(500).json({ message: 'internal server error' })
     }
 })
 
 
-// DELETE /:yelpId/comments/:id -- deletes a comment, (if comment look weird in user profile check here).
-router.delete('/:yelpId/comments/:id', async (req, res) => {
+// DELETE /:yelpId/:id/comments -- deletes a comment, (if comment look weird in user profile check here).
+router.delete('/:yelpId/:id/comments', async (req, res) => {
     try {
 
-        const foundCafe = await db.Cafe.findOne({yelpId: req.params.yelpId})
+        const foundCafe = await db.Cafe.findOne({ yelpId: req.params.yelpId })
+        const foundUser = await db.User.findOne({ _id: req.params.id })
         foundCafe.comment.splice(req.params.id, 1)
-        foundCafe.save(err => {
-            if (!err) console.log('Delete comment!')
-        })
-        res.json(foundCafe)
-    } catch(err) {
+        await foundCafe.save()
+        const payload = {
+            name: foundUser.name,
+            email: foundUser.email,
+            id: foundUser.id,
+            cafe: foundUser.cafe
+        }
+
+        // sign jwt and send back
+        const token = await jwt.sign(payload, process.env.JWT_SECRET)
+
+        res.json({ foundCafe, token })
+    } catch (err) {
 
         console.log(err)
         res.status(500).json({ message: 'internal server error' })
@@ -148,63 +166,66 @@ router.put('/:yelpId/:userId', async (req, res) => {
     try {
         // const foundCafe = await db.Cafe.findOne({ yelpId: req.params.yelpId })
         const foundCafe = await db.Cafe.findOne({ yelpId: req.params.yelpId })
-        const foundUser = await db.User.findOne({ _id: req.params.userId })
+        const foundUser = await db.User.findOne({ _id: req.params.userId }).populate('cafe')
 
         // console.log(foundCafe)
-        
-        if(foundUser.cafe.includes(foundCafe._id) == true) {
+
+        if (foundUser.cafe.includes(foundCafe._id) == true) {
             foundCafe.user.splice(foundCafe.user.indexOf(foundUser._id), 1)
             foundUser.cafe.splice(foundUser.cafe.indexOf(foundCafe._id), 1)
             // update token here
-            foundCafe.save(err => {
-                if (!err) console.log('deleting user from cafe')
-            })
-            foundUser.save(err => {
-                if (!err) console.log('deleting cafe from user')
-            })
+            await foundCafe.save()
+            await foundUser.save()
             const payload = {
                 name: foundUser.name,
                 email: foundUser.email,
                 id: foundUser.id,
                 cafe: foundUser.cafe
             }
-        
+
             // sign jwt and send back
             const token = await jwt.sign(payload, process.env.JWT_SECRET)
+<<<<<<< HEAD
         
             res.json({foundCafe,  token })
+=======
+
+            res.json({ foundCafe, token })
+>>>>>>> 15bb752d806c04c99798d73390dff74dbd1d59b8
 
         } else {
             foundCafe.user.push(foundUser)
             foundUser.cafe.push(foundCafe)
             // and update token here
-            foundCafe.save(err => {
-                if (!err) console.log('adding user to cafe', req.params.userId)
-            })
-            foundUser.save(err => {
-                if (!err) console.log('Adding cafe to user')
-            })
-    
+            foundCafe.save()
+            foundUser.save()
+
             // create jwt payload
+            // const payload = {
+            //     name: foundUser.name,
+            //     email: foundUser.email,
+            //     id: foundUser.id,
+            //     cafe: foundUser.cafe
+            // }
             const payload = {
                 name: foundUser.name,
                 email: foundUser.email,
                 id: foundUser.id,
                 cafe: foundUser.cafe
             }
-        
+
             // sign jwt and send back
             const token = await jwt.sign(payload, process.env.JWT_SECRET)
-        
-            res.json({foundCafe,  token })
+
+            res.json({ foundCafe, token })
 
         }
 
-    } catch(err) {
+    } catch (err) {
         console.log(err)
         res.status(500).json({ message: 'internal server error' })
-    }    
- })
+    }
+})
 
 
 module.exports = router
